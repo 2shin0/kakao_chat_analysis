@@ -1,0 +1,11 @@
+pandas
+chardet
+emoji
+urlextract 
+torch==2.2.2
+transformers
+wordcloud
+numpy==1.26.4
+nltk
+gensim
+seaborn
