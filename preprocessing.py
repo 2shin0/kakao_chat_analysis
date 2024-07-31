@@ -116,7 +116,10 @@ def katalk_msg_parse(file):
     # 날짜 및 시간 처리
     df['date_time'] = df['date_time'].str.replace('오전', 'AM')
     df['date_time'] = df['date_time'].str.replace('오후', 'PM')
-    df['date_time'] = pd.to_datetime(df['date_time'], format='%Y. %m. %d. %p %I:%M')
+    try:
+        df['date_time'] = pd.to_datetime(df['date_time'], format='%Y. %m. %d. %p %I:%M')
+    except:
+        df['date_time'] = pd.to_datetime(df['date_time'], format='%Y년 %m월 %d일 %p %I:%M')
     df['year'] = df['date_time'].dt.year
     df['month'] = df['date_time'].dt.month
     df['day'] = df['date_time'].dt.day

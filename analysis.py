@@ -17,7 +17,7 @@ import pandas as pd
 
 classifier = pipeline("text-classification", model="matthewburke/korean_sentiment")
 stopwords = get_stopwords()
-font_path = './font/BMJUA_TTF.ttf'
+font_path = './font/BMJUA_TTF.TTF'
 
 # 기본통계
 def generate_basic_statistics(df):
