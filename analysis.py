@@ -359,3 +359,69 @@ def making_cluster(df):
         f.write(img_stream.read())
 
     return img_stream
+
+
+## 네트워크 분석
+# from utils import get_stopwords
+# import networkx as nx
+# from itertools import combinations
+# from matplotlib import font_manager as fm
+
+# def text_to_network_graph(df, max_nodes=30, font_path='font/BMJUA_TTF.TTF'):
+#     # Okt 형태소 분석기 초기화
+#     okt = Okt()
+#     stopwords = get_stopwords()
+#     def preprocess_text(text):
+#         # 명사 추출
+#         nouns = okt.nouns(text)
+#         # 불용어 제거
+#         filtered_nouns = [word for word in nouns if word not in stopwords]
+#         return filtered_nouns
+
+#     # 명사 추출 및 불용어 제거
+#     df['processed_text'] = df['clean_text'].apply(preprocess_text)
+
+#     edges = []
+#     for text_list in df['processed_text']:
+#         # 단어 쌍 생성
+#         for word1, word2 in combinations(text_list, 2):
+#             edges.append((word1, word2))
+
+#     edges_df = pd.DataFrame(edges, columns=['source', 'target'])
+#     g = nx.from_pandas_edgelist(edges_df, source='source', target='target')
+
+#     # 노드 개수 제한
+#     if len(g.nodes()) > max_nodes:
+#         # 노드 중요도(연결 정도)에 따라 정렬
+#         node_degrees = dict(g.degree())
+#         # 상위 max_nodes 개의 노드 선택
+#         top_nodes = sorted(node_degrees, key=node_degrees.get, reverse=True)[:max_nodes]
+#         # 제한된 노드와 그에 관련된 엣지만 선택
+#         g = g.subgraph(top_nodes).copy()
+
+#     prop = fm.FontProperties(fname=font_path)
+#     plt.rcParams['font.family'] = prop.get_name()
+#     # 그래프 정보 출력
+#     print(f"Number of nodes: {g.number_of_nodes()}")
+#     print(f"Number of edges: {g.number_of_edges()}")
+#     print(f"Nodes: {list(g.nodes())}")
+#     print(f"Edges: {list(g.edges())}")
+
+#     # 그래프 시각화
+#     plt.figure(figsize=(10, 8))
+#     pos = nx.spring_layout(g, seed=42)
+
+#     node_sizes = [v * 100 for v in dict(g.degree()).values()]
+#     nx.draw_networkx_nodes(g, pos, node_size=node_sizes, node_color='lightblue', alpha=0.8, edgecolors='none')
+#     edge_weights = [g[u][v].get('weight', 1) for u, v in g.edges()]
+#     nx.draw_networkx_edges(g, pos, width=[w * 0.5 for w in edge_weights], alpha=0.5, edge_color='gray')
+#     nx.draw_networkx_labels(g, pos, font_size=12, font_family=prop.get_name())
+
+#     plt.title('Network Graph Visualization')
+
+#     img_stream = BytesIO()
+#     plt.savefig(img_stream, format='png')
+#     plt.close()
+#     img_stream.seek(0)
+
+#     return img_stream
