@@ -1,6 +1,6 @@
 import streamlit as st
 from preprocessing import katalk_msg_parse
-from analysis import generate_basic_statistics, generate_wordcloud, perform_sentiment_analysis, perform_topic_analysis, making_topic_modeling
+from analysis import generate_basic_statistics, generate_wordcloud, perform_sentiment_analysis, making_topic_modeling, making_cluster
 from utils import load_uploaded_file
 import pandas as pd
 from streamlit_option_menu import option_menu
@@ -78,7 +78,7 @@ elif choice == '데이터 분석':
         df_filtered = st.session_state.df_filtered
         
         # Tabs for analysis
-        tabs = st.tabs(['기본 통계', '워드클라우드', '감정 분석', '토픽 분석'])
+        tabs = st.tabs(['기본 통계', '워드클라우드', '감정 분석', '토픽 분석', '군집 분석'])
         
         with tabs[0]:
             statistics_image = generate_basic_statistics(df_filtered)
@@ -100,5 +100,8 @@ elif choice == '데이터 분석':
             
             st.write('#### 부정 채팅 토픽 분석')
             st.write(false)
+        with tabs[4]:
+            clustering_img = making_cluster(df_filtered)
+            st.image(clustering_img)
     else:
         st.write("데이터가 필요합니다.")

@@ -15,9 +15,22 @@ from io import BytesIO
 import streamlit as st
 import pandas as pd
 
-classifier = pipeline("text-classification", model="matthewburke/korean_sentiment")
+#군집 분석
+import numpy as np
+from gensim.models import Word2Vec
+from gensim.utils import simple_preprocess
+from sklearn.manifold import TSNE
+from sklearn.cluster import KMeans
+from scipy.spatial import ConvexHull
+
+
 stopwords = get_stopwords()
-font_path = './font/BMJUA_TTF.TTF'
+font_path = './font/BMJUA_TTF.ttf'
+# 한글 글꼴 적용
+font_manager.fontManager.addfont(font_path)
+font_prop = font_manager.FontProperties(fname=font_path)
+rcParams['font.family'] = font_prop.get_name()
+rcParams['axes.unicode_minus'] = False
 
 # 기본통계
 def generate_basic_statistics(df):
@@ -158,11 +171,6 @@ def extract_keywords(comments, stopwords, top_n=5):
 
 def perform_sentiment_analysis(df):
 
-    # 한글 글꼴 적용
-    font_manager.fontManager.addfont(font_path)
-    font_prop = font_manager.FontProperties(fname=font_path)
-    rcParams['font.family'] = font_prop.get_name()
-
     # 파이차트 생성
     true_count = sum(df['is_positive'])
     false_count = len(df['is_positive']) - true_count
@@ -212,6 +220,7 @@ def perform_sentiment_analysis(df):
     with col2:
         st.subheader('부정적인 채팅 키워드')
         st.dataframe(df_keywords_negative)
+
 
 def make_autopct(values):
     def my_autopct(pct):
@@ -276,3 +285,77 @@ def making_topic_modeling(df):
     positive_topics_df = perform_topic_analysis(true_comments)
     negative_topics_df = perform_topic_analysis(false_comments)   
     return positive_topics_df, negative_topics_df
+
+
+
+## 군집분석
+def making_cluster(df):
+    # 문장 전처리 및 토큰화
+    tokenized_sentences = [simple_preprocess(sentence) for sentence in df['text_only_hanguel']]
+    # Word2Vec 모델 훈련
+    model = Word2Vec(sentences=tokenized_sentences, vector_size=100, window=5, min_count=1, workers=4)
+
+    # 단어 벡터 추출
+    word_vectors = np.array([model.wv[word] for word in model.wv.index_to_key])
+    words = model.wv.index_to_key
+
+    # 단어 빈도 계산
+    word_freq = Counter([word for sentence in tokenized_sentences for word in sentence])
+    common_words = [word for word, freq in word_freq.most_common(30)]  # 상위 100개 단어
+
+    # 상위 단어만 필터링
+    indices = [model.wv.key_to_index[word] for word in common_words]
+    filtered_vectors = np.array([word_vectors[i] for i in indices])
+    filtered_words = common_words
+
+    # 차원 축소 (t-SNE 사용)
+    tsne = TSNE(n_components=2, perplexity=10, n_iter=300)
+    reduced_vectors = tsne.fit_transform(filtered_vectors)
+
+    # K-Means 군집 분석
+    n_clusters = 3  # 군집의 수를 설정
+    kmeans = KMeans(n_clusters=n_clusters, random_state=42)
+    labels = kmeans.fit_predict(reduced_vectors)
+
+    # 시각화
+    plt.figure(figsize=(12, 8))
+
+    # 군집별 Convex Hull 시각화
+    for cluster in range(n_clusters):
+        cluster_points = reduced_vectors[labels == cluster]
+        if len(cluster_points) >= 3:  # Convex Hull을 계산하기 위한 최소 포인트 수
+            hull = ConvexHull(cluster_points)
+            plt.plot(cluster_points[hull.vertices, 0], cluster_points[hull.vertices, 1], 'k--', alpha=0.6)
+            plt.fill(cluster_points[hull.vertices, 0], cluster_points[hull.vertices, 1], alpha=0.2, label=f'Cluster {cluster}')
+
+    scatter = plt.scatter(reduced_vectors[:, 0], reduced_vectors[:, 1], c=labels, cmap='viridis', edgecolors='k', marker='o')
+    plt.colorbar(scatter, label='Cluster Label')
+
+    # 단어 라벨 추가
+    for i, word in enumerate(filtered_words):
+        plt.annotate(word,
+                    (reduced_vectors[i, 0], reduced_vectors[i, 1]),
+                    fontsize=10,
+                    textcoords="offset points",
+                    xytext=(5, 5),  # (x, y) 오프셋을 조정하여 레이블을 점에서 떨어지게 함
+                    ha='center')
+
+    plt.title('t-SNE Visualization with K-Means Clustering and Convex Hulls of Word Vectors')
+    plt.xlabel('Component 1')
+    plt.ylabel('Component 2')
+    plt.legend()
+    plt.show()
+
+    img_stream = BytesIO()
+    plt.savefig(img_stream, format='png')
+    plt.close()
+    
+    # Optionally save to disk (if needed)
+    output_dir = './data'
+    os.makedirs(output_dir, exist_ok=True)
+    save_path = os.path.join(output_dir, 'clustering.png')
+    img_stream.seek(0)
+    with open(save_path, 'wb') as f:
+        f.write(img_stream.read())
+
+    return img_stream

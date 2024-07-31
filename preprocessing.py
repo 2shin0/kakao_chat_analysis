@@ -50,6 +50,11 @@ def classify_sentiment(text):
     return label, score
 
 
+# 한글만 필터링하는 함수
+def filter_korean(text):
+    return re.sub(r'[^가-힣\s]', '', text)
+
+
 
 def katalk_msg_parse(file):
     encoding = detect_encoding(file)
@@ -159,6 +164,11 @@ def katalk_msg_parse(file):
     user_names_list = extract_user_names(df)
     df['clean_text'] = df['clean_text'].apply(lambda text: remove_user_mentions(text, user_names_list))
     df = df[~df['clean_text'].str.contains('@')]
+
+    # 데이터프레임의 'text_clean' 열에서 한글만 필터링
+    df['text_only_hanguel'] = df['clean_text'].apply(filter_korean)
+    # 빈 문장 제거
+    df = df[df['text_only_hanguel'].str.strip() != '']
 
 
     df['sentiment_label'] = df['clean_text'].apply(lambda text: classify_sentiment(text)[0])
