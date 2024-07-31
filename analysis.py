@@ -25,7 +25,7 @@ from scipy.spatial import ConvexHull
 
 
 stopwords = get_stopwords()
-font_path = './font/BMJUA_TTF.ttf'
+font_path = './font/BMJUA_TTF.TTF'
 # 한글 글꼴 적용
 font_manager.fontManager.addfont(font_path)
 font_prop = font_manager.FontProperties(fname=font_path)
